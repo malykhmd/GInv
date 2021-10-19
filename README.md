@@ -19,11 +19,11 @@ Debian/Ubuntu
 
 Fedora/Red Hat/CentOS
 
-    # yum install g++ cmake libgmp-devel python3-devel libcppunit-devel python3-pygraphviz doxygen-gui libgraphviz-devel cython3 jupyter-notebook jupyter-nbconvert build-essential python3-pip
+    yum install g++ cmake libgmp-devel python3-devel libcppunit-devel python3-pygraphviz doxygen-gui libgraphviz-devel cython3 jupyter-notebook jupyter-nbconvert build-essential python3-pip
 
 To download the Ginv source clone the Github folder:
 
-git clone https://github.com/blinkovua/GInv.git
+        git clone https://github.com/blinkovua/GInv.git
 
 The Ginv source has three parts.
 
@@ -73,11 +73,11 @@ derivations of the  functions is called a monomial. The differential ring
 is the set of linear combinations of monomials over ZZ. The number of
 independent variables is called size, the number of functions
 is called pos. If the ring is polynomial then pos=-1. In GInv monomials
-x1^m1*...*xn^mn printed as
+<img src="https://render.githubusercontent.com/render/math?math={x_1}^{m_1}\dots {x_n}^{m_n}"> printed as
 
-    [pos degree:m0 ... mn]
+    [pos degree:m1 ... mn]
 
-where degree is equal to sum m0+...+mn.
+where degree is equal to sum m1+...+mn.
 
 Ex. 1. Let's consider the ring ZZ[x0,x1,x2,x3]. First at all we need to define
 monomials x0, x1, x2, x3. In GInv the monomial xi written as
@@ -101,7 +101,7 @@ in polynomials we use the cycle:
 
 Now the elements of x are polynomials x0,x1,x2,x3. Any polynomial of
 ZZ[x0,x1,x2,x3] we can define using its symbolic expression. For ex.
-we can define f=(3*x1*x3+2*x0)^3+15 by follow expression
+we can define <img src="https://render.githubusercontent.com/render/math?math={f=(3x_1 x_3 %2B 2 x_0)^3 %2B 15}"> by follow expression
 
     f=(x[1]*x[3]*3+x[0]*2)**3+15
 
