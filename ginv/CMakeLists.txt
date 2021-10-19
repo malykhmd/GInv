@@ -100,6 +100,8 @@ ADD_LIBRARY(ginv STATIC
   gb.h
   poly_int.cpp
   poly_int.h
+  basis.cpp
+  basis.h
 )
 
 TARGET_LINK_LIBRARIES(ginv

@@ -599,9 +599,6 @@ void PolyInt::redTail(List<Term*>::Iterator i1, const PolyInt& a) {
   }
 }
 
-// void PolyInt::nf(Janet &a);
-// void PolyInt::nfTail(Janet &a);
-
 bool PolyInt::isPp() const {
   if (!mHead)
     return true;

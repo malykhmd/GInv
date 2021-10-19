@@ -22,4 +22,9 @@
 
 namespace GInv {
 
+void Basis::build() {
+
+}
+
+
 }

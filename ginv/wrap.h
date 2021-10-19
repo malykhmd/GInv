@@ -40,6 +40,19 @@ class Wrap {
 public:
   Wrap()=delete;
   Wrap(const Wrap& a)=delete;
+  Wrap(Allocator* allocator, const Wrap& a):
+      mAllocator(allocator),
+      mLm(allocator, a.mLm),
+      mAnsector(allocator, a.mAnsector),
+      mNM(new(allocator) bool[a.mLm.size()]),
+      mNMd(new(allocator) bool[a.mLm.size()]),
+      mBuild(new(allocator) bool[a.mLm.size()]) {
+    for(int i=0; i < mLm.size(); i++) {
+      mNM[i] = a.mNM[i];
+      mNMd[i] = a.mNMd[i];
+      mBuild[i] = a.mBuild[i];
+    }
+  }
   Wrap(Allocator* allocator, const Monom& m):
       mAllocator(allocator),
       mLm(allocator, m),
@@ -73,6 +86,8 @@ public:
     mAllocator->dealloc(mNMd, mLm.size());
     mAllocator->dealloc(mBuild, mLm.size());
   }
+
+  void swap(Wrap& a);
 
   const Monom& lm() const { return mLm; }
   const Monom& ansector() const { return mAnsector; }

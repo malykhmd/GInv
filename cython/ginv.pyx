@@ -375,8 +375,6 @@ cdef extern from "poly_int.h" namespace "GInv":
     void pow(int deg)
 
     void reduction(const PolyInt& a)
-    #void nf(Janet &a)
-    #void nfTail(Janet &a)
     bool isPp() const
     void pp()
 
@@ -534,32 +532,82 @@ cdef class poly_int(const_poly_int):
     (<PolyInt *>self.ptr).pp()
     return self
 
-#cdef class wrap:
-  #cdef const Wrap *ptr
+cdef extern from "poly_int.h" namespace "GInv":
+  cdef cppclass WrapPolyInt:
+    const Monom& lm() const
+    const Monom& ansector() const
+    bool isGB() const
 
-  #def __nonzero__(self):
-    #return self.ptr != NULL
-  #def lm(self):
-    #r = const_monom()
-    #r.ptr = &self.ptr.lm()
-    #return r
-  #def ansector(self):
-    #r = const_monom()
-    #r.ptr = &self.ptr.ansector()
-    #return r
+    bool NM(int var) const
+    bool build(int var) const
+    const PolyInt& poly() const
 
-  #def isGB(self):
-    #return self.ptr.isGB()
-  #def NM(self, int var):
-    #return self.ptr.NM(var)
-  #def NMd(self, int var):
-    #return self.ptr.NMd(var)
-  #def build(self, int var):
-    #return self.ptr.build(var)
+cdef class wrap_poly_int:
+  cdef const WrapPolyInt *ptr
 
-  #def __str__(self):
-    #return "%s%s[%s]" % (self.lm(), self.ansector(),\
-        #"".join("*" if self.ptr.NM(var) else " " for 0 <= var < self.ptr.lm().size()))
+  def lm(self):
+    r = const_monom()
+    r.ptr = &self.ptr.lm()
+    return r
+  def ansector(self):
+    r = const_monom()
+    r.ptr = &self.ptr.ansector()
+    return r
+  def isGB(self):
+    return self.ptr.isGB()
+
+  def NM(self, int var):
+    return self.ptr.NM(var)
+  def build(self, int var):
+    return self.ptr.build(var)
+  def poly(self):
+    r = poly_int()
+    r.ptr = &self.ptr.poly()
+    return r
+
+  def __str__(self):
+    return "%s%s[%s]" % (self.lm(), self.ansector(),\
+        "".join("*" if self.ptr.NM(var) else " " for 0 <= var < self.ptr.lm().size()))
+
+cdef extern from "poly_int.h" namespace "GInv":
+  cdef cppclass JanetPolyInt:
+    int size() const
+    WrapPolyInt* find(const Monom &m) const
+    void draw(const char* format, const char* filename)
+
+
+cdef extern from "poly_int.h" namespace "GInv":
+  cdef cppclass GCWrapPolyInt:
+    pass
+
+  cdef cppclass GCListWrapPolyIntConstIterator "GInv::GCListWrapPolyInt::ConstIterator":
+    GCWrapPolyInt* data() const
+    bool isNext "operator bool"() const
+    void next "operator++"()
+
+  cdef cppclass Basis:
+    Basis()
+
+    bool compare(const PolyInt& a)
+    void push(const PolyInt& a)
+
+    void build();
+
+    GCListWrapPolyIntConstIterator begin() const
+    const JanetPolyInt& janet() const
+
+    const Timer& timer() const
+    int reduction() const
+
+cdef class basis:
+  cdef Basis *ptr
+  def __cinit__(self):
+    self.ptr = new Basis()
+  def __dealloc__(self):
+    del self.ptr
+
+  def compare(self, const_poly_int a):
+    return self.ptr.compare(a.ptr[0])
 
 #cdef extern from "mcompletion.h" namespace "GInv":
   #cdef cppclass MCompletion:

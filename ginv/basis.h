@@ -21,20 +21,58 @@
 #ifndef GINV_BASIS_H
 #define GINV_BASIS_H
 
-#include "janet.h"
+#include "util/timer.h"
+#include "poly_int.h"
 
 #include "config.h"
 
 namespace GInv {
 
+
 class Basis {
-  Allocator*  mAllocator;
-  ListWrap    mQ;
-  ListWrap    mT;
-  int (*mCmp)(const Wrap&, const Wrap&);
+  Allocator            mAllocator;
+  GCListWrapPolyInt    mQ;
+  GCListWrapPolyInt    mT;
+  JanetPolyInt         mJanet;
+
+  Timer                mTimer;
+  int                  mReduction;
 
 public:
-  Basis()
+  Basis():
+      mAllocator(),
+      mQ(),
+      mT(),
+      mJanet(&mAllocator, -1),
+      mTimer(),
+      mReduction(0) {
+  }
+  ~Basis() {
+    for(GCListWrapPolyInt::ConstIterator j(mQ.begin()); j; ++j)
+      delete j.data();
+    for(GCListWrapPolyInt::ConstIterator j(mT.begin()); j; ++j)
+      delete j.data();
+  }
+
+  bool compare(const PolyInt& a) {
+    return (!mQ or !mT) ||
+      (mQ && mQ.head()->poly().compare(a)) ||
+      (mT && mT.head()->poly().compare(a));
+  }
+  void push(const PolyInt& a) {
+    assert(compare(a));
+    mQ.push(new WrapPolyInt(a));
+  }
+
+  void build();
+
+  GCListWrapPolyInt::ConstIterator begin() const {
+    return mT.begin();
+  }
+  const JanetPolyInt& janet() const { return mJanet; }
+
+  const Timer& timer() const { return mTimer; }
+  int reduction() const { return mReduction; }
 };
 
 }

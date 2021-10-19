@@ -25,6 +25,8 @@
 #include "util/list.h"
 #include "util/integer.h"
 #include "monom.h"
+#include "wrap.h"
+#include "janet.h"
 
 #include "config.h"
 
@@ -200,6 +202,11 @@ public:
     assert(mHead);
     return mHead.head()->mMonom.degree();
   }
+  int cmp(const PolyInt& a) const {
+    assert(mHead);
+    assert(a.mHead);
+    return mCmp1(lm(), a.lm());
+  }
   int norm() const;
   const Monom& lm() const {
     assert(mHead);
@@ -223,25 +230,8 @@ public:
   bool isPp() const;
   void pp();
 
-//   template <typename T>
-//   int nf(T &a) {
-//     int r=0;
-//     if (!isZero()) {
-//       Wrap* wrap = a.find(lm());
-//       while(wrap) {
-//         reduction(wrap->poly());
-//         ++r;
-//         if (isZero())
-//           break;
-//         wrap = a.find(poly.lm());
-//       }
-//     }
-//     return r;
-//   }
-//   template <typename T>
-//   void nfTail(T &a) {
-//
-//   }
+  template <typename D> int nf(D &a);
+  template <typename D> int nfTail(D &a);
 
   friend PolyInt operator-(PolyInt&& a) {
     PolyInt r(std::move(a));
@@ -269,13 +259,139 @@ public:
     return r;
   }
 
-
   friend std::ostream& operator<<(std::ostream& out, const PolyInt &a);
 
   bool assertValid() const;
 };
 
-typedef GC<PolyInt> PolyIntGC;
+
+class WrapPolyInt: protected AllocatorPtr, public Wrap {
+  PolyInt* mPoly;
+
+public:
+  WrapPolyInt(const PolyInt &a):
+      AllocatorPtr(),
+      Wrap(allocator(), a.lm()),
+      mPoly(new(allocator()) PolyInt(allocator(), a)) {
+  }
+  WrapPolyInt(const WrapPolyInt &a):
+      AllocatorPtr(),
+      Wrap(allocator(), a),
+      mPoly(new(allocator()) PolyInt(allocator(), *a.mPoly)) {
+  }
+  ~WrapPolyInt() {
+    allocator()->destroy(mPoly);
+  }
+
+  void swap(WrapPolyInt &a) {
+    AllocatorPtr::swap(a);
+    Wrap::swap(a);
+
+    auto tmp1=mPoly;
+    mPoly = a.mPoly;
+    a.mPoly = tmp1;
+  }
+
+  void reallocate() {
+#ifdef GINV_UTIL_ALLOCATOR
+    if (allocator()->isGC()) {
+      Allocator::timerCont();
+      WrapPolyInt a(*this);
+      swap(a);
+      Allocator::timerStop();
+    }
+#endif // GINV_UTIL_ALLOCATOR
+  }
+  size_t alloc() const { return allocator()->alloc(); }
+  size_t size() const { return allocator()->size(); }
+  bool isGC() const { return allocator()->isGC(); }
+
+  template <typename D> int nf(D &a) {
+    int r=a.mPoly->nf(a);
+    reallocate();
+    return r;
+  }
+
+  template <typename D> int nfTail(D &a) {
+    int r=a.mPoly->nf(a);
+    reallocate();
+    return r;
+  }
+
+  bool isPp() const { return mPoly->isPp(); }
+  void pp() {
+    mPoly->pp();
+    reallocate();
+  }
+
+  const PolyInt& poly() const { return *mPoly; }
+};
+
+typedef GC<List<WrapPolyInt*> > GCListWrapPolyInt;
+
+template <typename D> int PolyInt::nf(D &a) {
+  int r=0;
+  if (!isZero()) {
+    WrapPolyInt *wrap = a.find(lm());
+    while(wrap) {
+      reduction(wrap->poly());
+      ++r;
+      if (isZero())
+        break;
+      wrap = a.find(lm());
+    }
+  }
+  return r;
+}
+
+template <typename D> int PolyInt::nfTail(D &a) {
+  if (isZero())
+    return 0;
+
+  int r = 0;
+  if (!isZero()) {
+    WrapPolyInt *wrap = nullptr;
+    List<Term*>::Iterator i(mHead.begin());
+    do {
+      ++i;
+      if (!i)
+        break;
+      wrap = a.find(i.data()->mMonom);
+    }
+    while(wrap == nullptr);
+
+    if (wrap) {
+      do {
+        redTail(i, wrap->poly());
+        ++r;
+        while(i) {
+          wrap = a.find(i.data()->mMonom);
+          if (wrap)
+            break;
+          ++i;
+        }
+      }
+      while(i);
+      pp();
+    }
+  }
+  return r;
+}
+
+class JanetPolyInt: public Janet {
+public:
+  explicit JanetPolyInt(Allocator* allocator, int pos=-1):
+      Janet(allocator, pos) {
+  }
+  ~JanetPolyInt() {}
+
+  WrapPolyInt* find(const Monom &m) const {
+    return (WrapPolyInt*)Janet::find(m);
+  }
+  void insert(WrapPolyInt *wrap) {
+    Janet::insert(wrap);
+  }
+};
 
 }
 

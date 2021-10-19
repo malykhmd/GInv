@@ -183,17 +183,17 @@ void Monom::swap(Monom& a) {
   mSize = a.mSize;
   a.mSize = tmp2;
 
-  tmp2 = mPos;
+  auto tmp3 = mPos;
   mPos = a.mPos;
-  a.mPos = tmp2;
+  a.mPos = tmp3;
 
-  tmp2 = mDegree;
+  auto tmp4 = mDegree;
   mDegree = a.mDegree;
-  a.mDegree = tmp2;
+  a.mDegree = tmp4;
 
-  auto tmp3=mVariables;
+  auto tmp5=mVariables;
   mVariables = a.mVariables;
-  a.mVariables = tmp3;
+  a.mVariables = tmp5;
 }
 
 void Monom::operator=(const Monom &a) {
